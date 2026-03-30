@@ -12,6 +12,5 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/backend /app/backend
 COPY --from=builder /app/frontend /app/frontend
-COPY --from=builder /app/.env /app/.env
 EXPOSE 3000
 CMD ["/app/backend"]
