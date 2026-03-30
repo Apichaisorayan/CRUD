@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Cost Calc | Premium CRM</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="container">
+        <header>
+            <div class="logo-area">
+                <div class="rust-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h1>Construction <span>Pricing</span></h1>
+            </div>
+            <p class="subtitle">วัสดุก่อสร้างและค่าใช้จ่ายโครงการ</p>
+        </header>
+
+        <section class="card stats-summary">
+            <div class="stat-item">
+                <p>Total Cost</p>
+                <h3 id="grand-total">฿0.00</h3>
+            </div>
+            <div id="loading" class="spinner-small hidden"></div>
+        </section>
+
+        <section class="todo-input-section card">
+            <form id="material-form" class="todo-input-group">
+                <div class="row">
+                    <div class="input-wrapper flex-2">
+                        <label>Material Name</label>
+                        <input type="text" id="mat-name" placeholder="เช่น ปูนซีเมนต์, อิฐบล็อก" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-wrapper">
+                        <label>Price / Unit (฿)</label>
+                        <input type="number" id="mat-price" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Quantity</label>
+                        <input type="number" id="mat-qty" step="0.1" placeholder="1.0" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <span class="icon-plus">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </span>
+                    Add to List
+                </button>
+            </form>
+        </section>
+
+        <section class="todo-list-section">
+            <div class="list-header">
+                <h2>รายการวัสดุ (<span id="task-count">0</span>)</h2>
+            </div>
+            <div id="material-container" class="todo-list">
+                <!-- Data will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <div id="notification-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
