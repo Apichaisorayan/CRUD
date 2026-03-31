@@ -240,6 +240,7 @@ table {
 th, td {
   padding: 1rem;
   border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
 }
 
 th {

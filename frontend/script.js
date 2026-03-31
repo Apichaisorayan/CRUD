@@ -1,4 +1,7 @@
-const API_URL = '/api';
+// Auto-detect API URL. If using VS Code Live Server (port 5500), point to Rust backend (port 3000)
+const API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '3000'
+    ? 'http://localhost:3000/api'
+    : '/api';
 
 const uploadForm = document.getElementById('upload-form');
 const csvFileInput = document.getElementById('csv-file');
@@ -14,91 +17,91 @@ const btnRefresh = document.getElementById('btn-refresh');
 // Define exactly what the user provided
 const COLUMN_MAPPINGS = {
     '2024': {
-      customerId: ["Customer ID", "customerId", "customer_id"],
-      displayName: ["Display Name", "displayName", "name", "Name"],
-      phone: ["Contact Number", "Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
-      email: ["E-mail", "Email", "e-mail", "E-mail"],
-      platform: ["Platform", "Channel"],
-      lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
-      lineId: ["Line ID", "line_id"],
-      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
-      source: ["Source"],
-      serviceInterest: ["service_interest", "Service Interest", "service"],
-      lifecycleStage: ["Lifecycle Stage", "Stage"],
-      status: ["Status", "Customer Status"],
-      isUQL: ["UQL", "isUQL"],
-      isMQL: ["MQL", "isMQL"],
-      isSQL: ["SQL", "isSQL"],
-      mqlToSqlDays: ["MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
-      assignedSales: ["SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
-      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
-      revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
-      closeWonMonth: ["close won month", "Close Won Month"],
-      reasonLost: ["Reason lost", "Reason Lost"],
-      notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
-      remark: ["remark", "Remark"],
-      isInactive: ["Inactive", "isInactive", "Status_Inactive"],
-      date: ["Date", "Date_Clean", "createdAt", "date"],
-      month: ["Month", "Monrh"], // Handle typo in 2024
-      year: ["Year"]
+        customerId: ["Customer ID", "customerId", "customer_id"],
+        displayName: ["Display Name", "displayName", "name", "Name"],
+        phone: ["Contact Number", "Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
+        email: ["E-mail", "Email", "e-mail", "E-mail"],
+        platform: ["Platform", "Channel"],
+        lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
+        lineId: ["Line ID", "line_id"],
+        country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+        source: ["Source"],
+        serviceInterest: ["service_interest", "Service Interest", "service"],
+        lifecycleStage: ["Lifecycle Stage", "Stage"],
+        status: ["Status", "Customer Status"],
+        isUQL: ["UQL", "isUQL"],
+        isMQL: ["MQL", "isMQL"],
+        isSQL: ["SQL", "isSQL"],
+        mqlToSqlDays: ["MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
+        assignedSales: ["SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+        assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+        revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
+        closeWonMonth: ["close won month", "Close Won Month"],
+        reasonLost: ["Reason lost", "Reason Lost"],
+        notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
+        remark: ["remark", "Remark"],
+        isInactive: ["Inactive", "isInactive", "Status_Inactive"],
+        date: ["Date", "Date_Clean", "createdAt", "date"],
+        month: ["Month", "Monrh"], // Handle typo in 2024
+        year: ["Year"]
     },
     '2025': {
-      customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
-      displayName: ["Name", "Display Name", "displayName", "name"],
-      phone: ["Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
-      email: ["Email", "e-mail", "E-mail"],
-      platform: ["Platform", "Channel"],
-      lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
-      lineId: ["Line ID", "line_id"],
-      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
-      source: ["Chanel_Interection(Source)", "Source"],
-      serviceInterest: ["Main_Procedure", "service_interest", "Service Interest", "service"],
-      lifecycleStage: ["Lifecycle Stage", "Stage"],
-      status: ["Status", "Customer Status"],
-      isUQL: ["UQL", "isUQL"],
-      isMQL: ["MQL", "isMQL"],
-      isSQL: ["SQL", "isSQL"],
-      mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
-      assignedSales: ["Sale(CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
-      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
-      revenueWeight: ["HN (for close won case)", "HN", "hn", "revenue_weight"],
-      closeWonMonth: ["close won month", "Close Won Month"],
-      reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
-      notes: ["วันทำงานของแอดมินไทย", "notes", "Note"],
-      remark: ["REMARK", "remark", "Remark"],
-      isInactive: ["Inactive", "isInactive"],
-      date: ["Date", "createdAt", "date"],
-      month: ["Month"],
-      year: ["Year"]
+        customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
+        displayName: ["Name", "Display Name", "displayName", "name"],
+        phone: ["Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
+        email: ["Email", "e-mail", "E-mail"],
+        platform: ["Platform", "Channel"],
+        lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
+        lineId: ["Line ID", "line_id"],
+        country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+        source: ["Chanel_Interection(Source)", "Source"],
+        serviceInterest: ["Main_Procedure", "service_interest", "Service Interest", "service"],
+        lifecycleStage: ["Lifecycle Stage", "Stage"],
+        status: ["Status", "Customer Status"],
+        isUQL: ["UQL", "isUQL"],
+        isMQL: ["MQL", "isMQL"],
+        isSQL: ["SQL", "isSQL"],
+        mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
+        assignedSales: ["Sale(CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+        assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+        revenueWeight: ["HN (for close won case)", "HN", "hn", "revenue_weight"],
+        closeWonMonth: ["close won month", "Close Won Month"],
+        reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
+        notes: ["วันทำงานของแอดมินไทย", "notes", "Note"],
+        remark: ["REMARK", "remark", "Remark"],
+        isInactive: ["Inactive", "isInactive"],
+        date: ["Date", "createdAt", "date"],
+        month: ["Month"],
+        year: ["Year"]
     },
     '2026': {
-      customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
-      displayName: ["Display Name\n(ใช้ตามใน CAAC ได้เลย)", "Display Name (ใช้ตามใน CAAC ได้เลย)", "Display Name", "displayName", "name", "Name", "Display Name (ใช้ใน CAAC ได้เลย)"],
-      phone: ["Phone(WhatsApp Number)", "Phone (WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp", "Contact Number"],
-      email: ["Gmail", "Email", "e-mail", "E-mail"],
-      platform: ["Platform", "Channel"],
-      lineUid: ["Line_UID *สำคัญมาก*", "Line_UID สำคัญมาก", "Line_UID", "Line UID", "line_uid", "lineUID", "Line_UID*สำคัญมาก*"],
-      lineId: ["Line ID", "line_id"],
-      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
-      source: ["Source"],
-      serviceInterest: ["service_interest", "Service Interest", "service"],
-      lifecycleStage: ["lead_cycle", "Lifecycle Stage", "Stage"],
-      status: ["Status", "Customer Status"],
-      isUQL: ["UQL", "isUQL"],
-      isMQL: ["MQL", "isMQL"],
-      isSQL: ["SQL", "isSQL"],
-      mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "mql_to_sql_days"],
-      assignedSales: ["Sale (CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
-      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
-      revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
-      closeWonMonth: ["close won month", "Close Won Month"],
-      reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
-      notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
-      remark: ["remark", "Remark"],
-      isInactive: ["Inactive", "isInactive"],
-      date: ["Date", "createdAt", "date"],
-      month: ["Month"],
-      year: ["Year"]
+        customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
+        displayName: ["Display Name\n(ใช้ตามใน CAAC ได้เลย)", "Display Name (ใช้ตามใน CAAC ได้เลย)", "Display Name", "displayName", "name", "Name", "Display Name (ใช้ใน CAAC ได้เลย)"],
+        phone: ["Phone(WhatsApp Number)", "Phone (WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp", "Contact Number"],
+        email: ["Gmail", "Email", "e-mail", "E-mail"],
+        platform: ["Platform", "Channel"],
+        lineUid: ["Line_UID *สำคัญมาก*", "Line_UID สำคัญมาก", "Line_UID", "Line UID", "line_uid", "lineUID", "Line_UID*สำคัญมาก*"],
+        lineId: ["Line ID", "line_id"],
+        country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+        source: ["Source"],
+        serviceInterest: ["service_interest", "Service Interest", "service"],
+        lifecycleStage: ["lead_cycle", "Lifecycle Stage", "Stage"],
+        status: ["Status", "Customer Status"],
+        isUQL: ["UQL", "isUQL"],
+        isMQL: ["MQL", "isMQL"],
+        isSQL: ["SQL", "isSQL"],
+        mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "mql_to_sql_days"],
+        assignedSales: ["Sale (CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+        assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+        revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
+        closeWonMonth: ["close won month", "Close Won Month"],
+        reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
+        notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
+        remark: ["remark", "Remark"],
+        isInactive: ["Inactive", "isInactive"],
+        date: ["Date", "createdAt", "date"],
+        month: ["Month"],
+        year: ["Year"]
     }
 };
 
@@ -138,7 +141,7 @@ btnRefresh.addEventListener('click', fetchLeads);
 
 async function handleUpload(e) {
     e.preventDefault();
-    
+
     if (!csvFileInput.files[0]) {
         showNotification("Please select a CSV file.", "error");
         return;
@@ -146,22 +149,22 @@ async function handleUpload(e) {
 
     const file = csvFileInput.files[0];
     const yearSelection = mappingYearSelect.value;
-    
+
     toggleLoading(true);
     btnImport.disabled = true;
 
     Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: function(results) {
+        complete: function (results) {
             console.log("Parsed CSV:", results);
             if (results.errors.length > 0) {
                 console.warn("CSV parse errors:", results.errors);
             }
-            
+
             processData(results.data, yearSelection);
         },
-        error: function(err) {
+        error: function (err) {
             console.error(err);
             showNotification("Failed to parse CSV file.", "error");
             toggleLoading(false);
@@ -180,10 +183,10 @@ function getMapping(year) {
 function mapRow(row, mappingConfig) {
     const mappedRow = {};
     const rowKeys = Object.keys(row);
-    
+
     for (const [standardKey, possibleNames] of Object.entries(mappingConfig)) {
         let foundValue = null;
-        
+
         // Exact match check first
         for (const name of possibleNames) {
             // we check if that column name exists in our row data exactly, or ignoring case/spaces
@@ -192,7 +195,7 @@ function mapRow(row, mappingConfig) {
                 foundValue = row[name];
                 break;
             }
-            
+
             // Try trimmed case-insensitive
             const matchingKey = rowKeys.find(k => k.trim().toLowerCase() === name.trim().toLowerCase());
             if (matchingKey && row[matchingKey] !== "") {
@@ -200,7 +203,7 @@ function mapRow(row, mappingConfig) {
                 break;
             }
         }
-        
+
         mappedRow[standardKey] = foundValue ? String(foundValue).trim() : null;
     }
 
@@ -210,14 +213,14 @@ function mapRow(row, mappingConfig) {
             mappedRow.year = mappingYearSelect.value;
         }
     }
-    
+
     return mappedRow;
 }
 
 async function processData(csvData, selectedYear) {
     const mappingConfig = getMapping(selectedYear);
     const convertedData = csvData.map(row => mapRow(row, mappingConfig));
-    
+
     console.log(`Ready to send ${convertedData.length} records...`, convertedData[0]);
 
     // Send to backend in one batch
@@ -231,13 +234,13 @@ async function processData(csvData, selectedYear) {
         if (response.ok) {
             const data = await response.json();
             showNotification(`Import successful: ${data.imported_rows} rows added`, 'success');
-            
+
             // Show summary
             summarySection.classList.remove('hidden');
             importedCount.innerText = data.imported_rows;
-            
+
             csvFileInput.value = '';
-            
+
             // Refresh table
             fetchLeads();
         } else {
@@ -269,7 +272,7 @@ function renderTable(leads) {
     taskCount.innerText = leads.length;
 
     if (leads.length === 0) {
-        leadsBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">No leads found in database.</td></tr>`;
+        leadsBody.innerHTML = `<tr><td colspan="28" style="text-align: center; color: var(--text-dim); padding: 2rem;">No leads found in database.</td></tr>`;
         return;
     }
 
@@ -277,12 +280,33 @@ function renderTable(leads) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>#${lead.id}</td>
-            <td><strong>${lead.display_name || lead.customer_id || '-'}</strong></td>
+            <td>${lead.customer_id || '-'}</td>
+            <td><strong>${lead.display_name || '-'}</strong></td>
             <td>${lead.phone || '-'}</td>
+            <td>${lead.email || '-'}</td>
+            <td>${lead.platform || '-'}</td>
+            <td>${lead.line_uid || '-'}</td>
+            <td>${lead.line_id || '-'}</td>
+            <td>${lead.country || '-'}</td>
+            <td>${lead.source || '-'}</td>
             <td><span class="badge badge-primary">${lead.service_interest || '-'}</span></td>
+            <td>${lead.lifecycle_stage || '-'}</td>
             <td><span class="badge badge-secondary">${lead.status || '-'}</span></td>
+            <td>${lead.is_uql || '-'}</td>
+            <td>${lead.is_mql || '-'}</td>
+            <td>${lead.is_sql || '-'}</td>
+            <td>${lead.mql_to_sql_days || '-'}</td>
             <td>${lead.assigned_sales || '-'}</td>
+            <td>${lead.assigned_doctor || '-'}</td>
+            <td>${lead.revenue_weight || '-'}</td>
+            <td>${lead.close_won_month || '-'}</td>
+            <td>${lead.reason_lost || '-'}</td>
+            <td>${lead.notes || '-'}</td>
+            <td>${lead.remark || '-'}</td>
+            <td>${lead.is_inactive || '-'}</td>
             <td>${lead.date || '-'}</td>
+            <td>${lead.month || '-'}</td>
+            <td>${lead.year || '-'}</td>
         `;
         leadsBody.appendChild(tr);
     });
@@ -298,7 +322,7 @@ function showNotification(message, type) {
     const note = document.createElement('div');
     note.className = 'notification';
     note.innerText = message;
-    
+
     Object.assign(note.style, {
         background: type === 'error' ? 'var(--error)' : 'var(--success)',
         color: 'white',
@@ -310,16 +334,16 @@ function showNotification(message, type) {
         transition: 'opacity 0.3s ease',
         transform: 'translateY(10px)'
     });
-    
+
     if (!container.style.position) {
         Object.assign(container.style, { position: 'fixed', bottom: '20px', right: '20px', zIndex: '1000' });
     }
-    
+
     container.appendChild(note);
-    
+
     // Animate in
     setTimeout(() => { note.style.transform = 'translateY(0)'; }, 10);
-    
+
     // Animate out
     setTimeout(() => {
         note.style.opacity = '0';
