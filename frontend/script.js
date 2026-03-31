@@ -1,125 +1,291 @@
 const API_URL = '/api';
-const materialForm = document.getElementById('material-form');
-const materialContainer = document.getElementById('material-container');
-const taskCount = document.getElementById('task-count');
-const grandTotal = document.getElementById('grand-total');
+
+const uploadForm = document.getElementById('upload-form');
+const csvFileInput = document.getElementById('csv-file');
+const mappingYearSelect = document.getElementById('mapping-year');
+const btnImport = document.getElementById('btn-import');
 const loading = document.getElementById('loading');
+const summarySection = document.getElementById('summary-section');
+const importedCount = document.getElementById('imported-count');
+const taskCount = document.getElementById('task-count');
+const leadsBody = document.getElementById('leads-body');
+const btnRefresh = document.getElementById('btn-refresh');
 
-// Initial Load
-document.addEventListener('DOMContentLoaded', fetchMaterials);
-
-async function fetchMaterials() {
-    toggleLoading(true);
-    try {
-        const response = await fetch(`${API_URL}/materials`);
-        const materials = await response.json();
-        renderMaterials(materials);
-    } catch (error) {
-        console.error('Error fetching materials:', error);
-        showNotification('Failed to fetch data.', 'error');
-    } finally {
-        toggleLoading(false);
+// Define exactly what the user provided
+const COLUMN_MAPPINGS = {
+    '2024': {
+      customerId: ["Customer ID", "customerId", "customer_id"],
+      displayName: ["Display Name", "displayName", "name", "Name"],
+      phone: ["Contact Number", "Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
+      email: ["E-mail", "Email", "e-mail", "E-mail"],
+      platform: ["Platform", "Channel"],
+      lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
+      lineId: ["Line ID", "line_id"],
+      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+      source: ["Source"],
+      serviceInterest: ["service_interest", "Service Interest", "service"],
+      lifecycleStage: ["Lifecycle Stage", "Stage"],
+      status: ["Status", "Customer Status"],
+      isUQL: ["UQL", "isUQL"],
+      isMQL: ["MQL", "isMQL"],
+      isSQL: ["SQL", "isSQL"],
+      mqlToSqlDays: ["MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
+      assignedSales: ["SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+      revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
+      closeWonMonth: ["close won month", "Close Won Month"],
+      reasonLost: ["Reason lost", "Reason Lost"],
+      notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
+      remark: ["remark", "Remark"],
+      isInactive: ["Inactive", "isInactive", "Status_Inactive"],
+      date: ["Date", "Date_Clean", "createdAt", "date"],
+      month: ["Month", "Monrh"], // Handle typo in 2024
+      year: ["Year"]
+    },
+    '2025': {
+      customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
+      displayName: ["Name", "Display Name", "displayName", "name"],
+      phone: ["Phone(WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp"],
+      email: ["Email", "e-mail", "E-mail"],
+      platform: ["Platform", "Channel"],
+      lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID"],
+      lineId: ["Line ID", "line_id"],
+      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+      source: ["Chanel_Interection(Source)", "Source"],
+      serviceInterest: ["Main_Procedure", "service_interest", "Service Interest", "service"],
+      lifecycleStage: ["Lifecycle Stage", "Stage"],
+      status: ["Status", "Customer Status"],
+      isUQL: ["UQL", "isUQL"],
+      isMQL: ["MQL", "isMQL"],
+      isSQL: ["SQL", "isSQL"],
+      mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
+      assignedSales: ["Sale(CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+      revenueWeight: ["HN (for close won case)", "HN", "hn", "revenue_weight"],
+      closeWonMonth: ["close won month", "Close Won Month"],
+      reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
+      notes: ["วันทำงานของแอดมินไทย", "notes", "Note"],
+      remark: ["REMARK", "remark", "Remark"],
+      isInactive: ["Inactive", "isInactive"],
+      date: ["Date", "createdAt", "date"],
+      month: ["Month"],
+      year: ["Year"]
+    },
+    '2026': {
+      customerId: ["Customer_ID", "Customer ID", "customerId", "customer_id"],
+      displayName: ["Display Name\n(ใช้ตามใน CAAC ได้เลย)", "Display Name (ใช้ตามใน CAAC ได้เลย)", "Display Name", "displayName", "name", "Name", "Display Name (ใช้ใน CAAC ได้เลย)"],
+      phone: ["Phone(WhatsApp Number)", "Phone (WhatsApp Number)", "phone", "Phone", "Phone/WhatsApp", "Contact Number"],
+      email: ["Gmail", "Email", "e-mail", "E-mail"],
+      platform: ["Platform", "Channel"],
+      lineUid: ["Line_UID *สำคัญมาก*", "Line_UID สำคัญมาก", "Line_UID", "Line UID", "line_uid", "lineUID", "Line_UID*สำคัญมาก*"],
+      lineId: ["Line ID", "line_id"],
+      country: ["TH_IN_Status", "TH/IN Status", "TH/IN", "Country", "country"],
+      source: ["Source"],
+      serviceInterest: ["service_interest", "Service Interest", "service"],
+      lifecycleStage: ["lead_cycle", "Lifecycle Stage", "Stage"],
+      status: ["Status", "Customer Status"],
+      isUQL: ["UQL", "isUQL"],
+      isMQL: ["MQL", "isMQL"],
+      isSQL: ["SQL", "isSQL"],
+      mqlToSqlDays: ["MQL to SQL", "MQL TO SQL", "mql_to_sql_days"],
+      assignedSales: ["Sale (CS)", "SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC", "Assigned Sales", "Sales Name"],
+      assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+      revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
+      closeWonMonth: ["close won month", "Close Won Month"],
+      reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
+      notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
+      remark: ["remark", "Remark"],
+      isInactive: ["Inactive", "isInactive"],
+      date: ["Date", "createdAt", "date"],
+      month: ["Month"],
+      year: ["Year"]
     }
-}
+};
 
-materialForm.addEventListener('submit', async (e) => {
+const DEFAULT_MAPPING = {
+    customerId: ["Customer ID", "customerId", "customer_id", "Customer_ID"],
+    displayName: ["Display Name", "displayName", "name", "Name", "Display Name (ใช้ใน CAAC ได้เลย)"],
+    phone: ["Phone(WhatsApp Number)", "Contact Number", "phone", "Phone", "Phone/WhatsApp"],
+    email: ["Email", "E-mail", "e-mail", "Gmail"],
+    platform: ["Platform", "Channel"],
+    lineUid: ["Line_UID", "Line UID", "line_uid", "lineUID", "Line_UID *สำคัญมาก*"],
+    lineId: ["Line ID", "line_id"],
+    country: ["TH_IN_Status", "TH/IN", "Country", "TH/IN Status", "country"],
+    source: ["Source", "Chanel_Interection(Source)"],
+    serviceInterest: ["service_interest", "Service Interest", "Main_Procedure"],
+    lifecycleStage: ["Lifecycle Stage", "Stage", "lead_cycle"],
+    status: ["Status", "Customer Status"],
+    isUQL: ["UQL", "isUQL"],
+    isMQL: ["MQL", "isMQL"],
+    isSQL: ["SQL", "isSQL"],
+    mqlToSqlDays: ["MQL TO SQL", "MQL to SQL", "mql_to_sql_days"],
+    assignedSales: ["SALES (AC)", "Sale (AC)", "Sales (AC)", "Sale(AC)", "Sales(AC)", "Sale(CS)", "Sales", "Sale", "CS", "AC"],
+    assignedDoctor: ["Doctor", "assigned_doctor", "Assigned Doctor", "Doctor Name"],
+    revenueWeight: ["HN", "hn", "revenue_weight", "HN (for close won case)"],
+    closeWonMonth: ["close won month", "Close Won Month"],
+    reasonLost: ["Reason Lost", "Reason lost", "reason_lost", "ReasonLost"],
+    notes: ["notes", "Note", "วันทำงานของแอดมินไทย"],
+    remark: ["remark", "REMARK", "Remark"],
+    isInactive: ["isInactive", "Inactive"],
+    date: ["Date", "Date_Clean", "createdAt", "date"],
+    month: ["Month", "Monrh"],
+    year: ["Year"]
+};
+
+document.addEventListener('DOMContentLoaded', fetchLeads);
+uploadForm.addEventListener('submit', handleUpload);
+btnRefresh.addEventListener('click', fetchLeads);
+
+async function handleUpload(e) {
     e.preventDefault();
-    const name = document.getElementById('mat-name').value;
-    const price = parseFloat(document.getElementById('mat-price').value);
-    const qty = parseFloat(document.getElementById('mat-qty').value);
-
-    if (!name || isNaN(price) || isNaN(qty)) return;
-
-    toggleLoading(true);
-    try {
-        const response = await fetch(`${API_URL}/materials`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: name,
-                quantity: qty,
-                unit_price: price,
-                category: "Construction"
-            })
-        });
-
-        if (response.ok) {
-            materialForm.reset();
-            await fetchMaterials();
-            showNotification('Item added successfully!', 'success');
-        }
-    } catch (error) {
-        showNotification('Error saving data.', 'error');
-    } finally {
-        toggleLoading(false);
-    }
-});
-
-async function deleteMaterial(id) {
-    if (!confirm('Are you sure?')) return;
     
-    toggleLoading(true);
-    try {
-        const response = await fetch(`${API_URL}/materials/${id}`, {
-            method: 'DELETE'
-        });
-        if (response.ok) {
-            await fetchMaterials();
-            showNotification('Item deleted.', 'success');
-        }
-    } catch (error) {
-        showNotification('Error deleting item.', 'error');
-    } finally {
-        toggleLoading(false);
-    }
-}
-
-function renderMaterials(materials) {
-    materialContainer.innerHTML = '';
-    taskCount.innerText = materials.length;
-
-    let total = 0;
-
-    if (materials.length === 0) {
-        materialContainer.innerHTML = `
-            <div class="card" style="text-align: center; color: var(--text-dim); padding: 3rem; width: 100%;">
-                <p>No items added. Start adding materials to calculate.</p>
-            </div>
-        `;
-        grandTotal.innerText = '฿0.00';
+    if (!csvFileInput.files[0]) {
+        showNotification("Please select a CSV file.", "error");
         return;
     }
 
-    materials.forEach((mat, index) => {
-        const itemTotal = mat.quantity * mat.unit_price;
-        total += itemTotal;
+    const file = csvFileInput.files[0];
+    const yearSelection = mappingYearSelect.value;
+    
+    toggleLoading(true);
+    btnImport.disabled = true;
 
-        const el = document.createElement('div');
-        el.className = 'todo-item';
-        el.style.animationDelay = `${index * 0.05}s`;
-
-        el.innerHTML = `
-            <div class="todo-content">
-                <h3 class="todo-title">${mat.name}</h3>
-                <div class="todo-meta">
-                    <span>Qty: <strong>${mat.quantity}</strong></span>
-                    <span>@ ฿${mat.unit_price.toLocaleString()}</span>
-                </div>
-            </div>
-            <div class="price-tag">฿${itemTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            <div class="actions">
-                <button class="btn-icon" onclick="deleteMaterial(${mat.id})">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            </div>
-        `;
-        materialContainer.appendChild(el);
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            console.log("Parsed CSV:", results);
+            if (results.errors.length > 0) {
+                console.warn("CSV parse errors:", results.errors);
+            }
+            
+            processData(results.data, yearSelection);
+        },
+        error: function(err) {
+            console.error(err);
+            showNotification("Failed to parse CSV file.", "error");
+            toggleLoading(false);
+            btnImport.disabled = false;
+        }
     });
+}
 
-    grandTotal.innerText = `฿${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+function getMapping(year) {
+    if (year === 'auto' || !COLUMN_MAPPINGS[year]) {
+        return DEFAULT_MAPPING;
+    }
+    return COLUMN_MAPPINGS[year];
+}
+
+function mapRow(row, mappingConfig) {
+    const mappedRow = {};
+    const rowKeys = Object.keys(row);
+    
+    for (const [standardKey, possibleNames] of Object.entries(mappingConfig)) {
+        let foundValue = null;
+        
+        // Exact match check first
+        for (const name of possibleNames) {
+            // we check if that column name exists in our row data exactly, or ignoring case/spaces
+            // A simple approach: exactly matches header string
+            if (row[name] !== undefined && row[name] !== "") {
+                foundValue = row[name];
+                break;
+            }
+            
+            // Try trimmed case-insensitive
+            const matchingKey = rowKeys.find(k => k.trim().toLowerCase() === name.trim().toLowerCase());
+            if (matchingKey && row[matchingKey] !== "") {
+                foundValue = row[matchingKey];
+                break;
+            }
+        }
+        
+        mappedRow[standardKey] = foundValue ? String(foundValue).trim() : null;
+    }
+
+    // Assigning missing years dynamically if not mapped
+    if (!mappedRow.year) {
+        if (mappingYearSelect.value !== 'auto') {
+            mappedRow.year = mappingYearSelect.value;
+        }
+    }
+    
+    return mappedRow;
+}
+
+async function processData(csvData, selectedYear) {
+    const mappingConfig = getMapping(selectedYear);
+    const convertedData = csvData.map(row => mapRow(row, mappingConfig));
+    
+    console.log(`Ready to send ${convertedData.length} records...`, convertedData[0]);
+
+    // Send to backend in one batch
+    try {
+        const response = await fetch(`${API_URL}/leads/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(convertedData)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            showNotification(`Import successful: ${data.imported_rows} rows added`, 'success');
+            
+            // Show summary
+            summarySection.classList.remove('hidden');
+            importedCount.innerText = data.imported_rows;
+            
+            csvFileInput.value = '';
+            
+            // Refresh table
+            fetchLeads();
+        } else {
+            const text = await response.text();
+            showNotification(`Import failed: ${text}`, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification("Error communicating with server.", "error");
+    } finally {
+        toggleLoading(false);
+        btnImport.disabled = false;
+    }
+}
+
+async function fetchLeads() {
+    try {
+        const response = await fetch(`${API_URL}/leads`);
+        const data = await response.json();
+        renderTable(data);
+    } catch (err) {
+        console.error(err);
+        // Only show error if it's not the initial load to prevent flashing warnings
+    }
+}
+
+function renderTable(leads) {
+    leadsBody.innerHTML = '';
+    taskCount.innerText = leads.length;
+
+    if (leads.length === 0) {
+        leadsBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">No leads found in database.</td></tr>`;
+        return;
+    }
+
+    leads.forEach(lead => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${lead.id}</td>
+            <td><strong>${lead.display_name || lead.customer_id || '-'}</strong></td>
+            <td>${lead.phone || '-'}</td>
+            <td><span class="badge badge-primary">${lead.service_interest || '-'}</span></td>
+            <td><span class="badge badge-secondary">${lead.status || '-'}</span></td>
+            <td>${lead.assigned_sales || '-'}</td>
+            <td>${lead.date || '-'}</td>
+        `;
+        leadsBody.appendChild(tr);
+    });
 }
 
 function toggleLoading(show) {
@@ -136,19 +302,27 @@ function showNotification(message, type) {
     Object.assign(note.style, {
         background: type === 'error' ? 'var(--error)' : 'var(--success)',
         color: 'white',
-        padding: '0.75rem 1.5rem',
-        borderRadius: '0.5rem',
+        padding: '1rem 1.5rem',
+        borderRadius: '0.75rem',
         marginBottom: '0.75rem',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-        fontWeight: '600'
+        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
+        fontWeight: '600',
+        transition: 'opacity 0.3s ease',
+        transform: 'translateY(10px)'
     });
     
     if (!container.style.position) {
         Object.assign(container.style, { position: 'fixed', bottom: '20px', right: '20px', zIndex: '1000' });
     }
+    
     container.appendChild(note);
+    
+    // Animate in
+    setTimeout(() => { note.style.transform = 'translateY(0)'; }, 10);
+    
+    // Animate out
     setTimeout(() => {
         note.style.opacity = '0';
         setTimeout(() => note.remove(), 300);
-    }, 3000);
+    }, 4000);
 }

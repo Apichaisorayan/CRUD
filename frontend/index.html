@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construction Cost Calc | Premium CRM</title>
+    <title>CSV Lead Importer | Data Manager</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <!-- PapaParse for parsing CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
     <div class="background-blobs">
@@ -20,54 +22,76 @@
         <header>
             <div class="logo-area">
                 <div class="rust-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
-                <h1>Construction <span>Pricing</span></h1>
+                <h1>CSV <span>Importer</span></h1>
             </div>
-            <p class="subtitle">วัสดุก่อสร้างและค่าใช้จ่ายโครงการ</p>
+            <p class="subtitle">ระบบนำเข้าข้อมูลฐานลูกค้าจากไฟล์ CSV</p>
         </header>
 
-        <section class="card stats-summary">
-            <div class="stat-item">
-                <p>Total Cost</p>
-                <h3 id="grand-total">฿0.00</h3>
-            </div>
-            <div id="loading" class="spinner-small hidden"></div>
-        </section>
-
-        <section class="todo-input-section card">
-            <form id="material-form" class="todo-input-group">
+        <section class="card upload-section">
+            <form id="upload-form" class="todo-input-group">
                 <div class="row">
                     <div class="input-wrapper flex-2">
-                        <label>Material Name</label>
-                        <input type="text" id="mat-name" placeholder="เช่น ปูนซีเมนต์, อิฐบล็อก" required>
+                        <label for="csv-file">Upload CSV File</label>
+                        <input type="file" id="csv-file" accept=".csv" required>
                     </div>
                 </div>
                 <div class="row">
                     <div class="input-wrapper">
-                        <label>Price / Unit (฿)</label>
-                        <input type="number" id="mat-price" step="0.01" placeholder="0.00" required>
-                    </div>
-                    <div class="input-wrapper">
-                        <label>Quantity</label>
-                        <input type="number" id="mat-qty" step="0.1" placeholder="1.0" required>
+                        <label for="mapping-year">Mapping Settings</label>
+                        <select id="mapping-year">
+                            <option value="auto">Auto (Detect all formats)</option>
+                            <option value="2024">Format 2024</option>
+                            <option value="2025">Format 2025</option>
+                            <option value="2026">Format 2026</option>
+                        </select>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary">
-                    <span class="icon-plus">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </span>
-                    Add to List
+                <button type="submit" id="btn-import" class="btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Start Import
                 </button>
             </form>
+            <div id="loading" class="spinner-small hidden" style="margin-top: 1rem;"></div>
         </section>
 
-        <section class="todo-list-section">
-            <div class="list-header">
-                <h2>รายการวัสดุ (<span id="task-count">0</span>)</h2>
+        <section class="todo-list-section summary-box hidden" id="summary-section">
+            <div class="card" style="margin-bottom: 2rem; border-color: var(--success);">
+                <h3 style="color: var(--success); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Import Successful!
+                </h3>
+                <p style="color: var(--text-dim);"><span id="imported-count" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span> rows have been successfully parsed and saved to the database.</p>
             </div>
-            <div id="material-container" class="todo-list">
-                <!-- Data will be injected here -->
+        </section>
+
+        <section class="todo-list-section" style="max-width: 100%; overflow-x: auto;">
+            <div class="list-header" style="justify-content: space-between; display: flex;">
+                <h2>Recent Leads (<span id="task-count">0</span>)</h2>
+                <button class="btn-icon" id="btn-refresh" style="color: var(--primary);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Refresh
+                </button>
+            </div>
+            
+            <div class="card table-container">
+                <table id="leads-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer Name</th>
+                            <th>Phone</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Sales</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-body">
+                        <!-- Data injected here -->
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>
