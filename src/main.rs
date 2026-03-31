@@ -90,6 +90,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect(&database_url)
         .await?;
 
+    println!("✅ Database connected successfully!");
+
     // Create table with all the mapped columns
     sqlx::query(
         r#"
