@@ -281,11 +281,15 @@ async function deleteLead(id) {
     try {
         const response = await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
         if (response.ok) {
-            showNotification(`Record #${id} deleted`, 'success');
+            showNotification(`Record #${id} deleted successfully`, 'success');
             fetchLeads();
+        } else {
+            const errorText = await response.text();
+            showNotification(`Failed to delete record: ${errorText || response.statusText}`, 'error');
         }
     } catch (err) {
         console.error(err);
+        showNotification('Network error: Could not reach server to delete.', 'error');
     }
 }
 
@@ -357,7 +361,7 @@ function renderTable(leads) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align: center;">
-                <button class="btn-delete" onclick="deleteLead(${lead.id})">
+                <button type="button" class="btn-delete" onclick="event.stopPropagation(); deleteLead(${lead.id})">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
             </td>
@@ -402,33 +406,14 @@ function toggleLoading(show) {
 function showNotification(message, type) {
     const container = document.getElementById('notification-container');
     const note = document.createElement('div');
-    note.className = 'notification';
+    note.className = `notification ${type === 'error' ? 'note-error' : 'note-success'}`;
     note.innerText = message;
-
-    Object.assign(note.style, {
-        background: type === 'error' ? 'var(--error)' : 'var(--success)',
-        color: 'white',
-        padding: '1rem 1.5rem',
-        borderRadius: '0.75rem',
-        marginBottom: '0.75rem',
-        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-        fontWeight: '600',
-        transition: 'opacity 0.3s ease',
-        transform: 'translateY(10px)'
-    });
-
-    if (!container.style.position) {
-        Object.assign(container.style, { position: 'fixed', bottom: '20px', right: '20px', zIndex: '1000' });
-    }
 
     container.appendChild(note);
 
-    // Animate in
-    setTimeout(() => { note.style.transform = 'translateY(0)'; }, 10);
-
-    // Animate out
+    // Auto-remove
     setTimeout(() => {
-        note.style.opacity = '0';
-        setTimeout(() => note.remove(), 300);
+        note.classList.add('out');
+        setTimeout(() => note.remove(), 400);
     }, 4000);
 }
