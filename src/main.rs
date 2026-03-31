@@ -76,6 +76,12 @@ struct LeadInput {
     pub year: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct PaginationQuery {
+    page: Option<i64>,
+    per_page: Option<i64>,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -90,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect(&database_url)
         .await?;
 
-    println!("Database connected successfully!");
+    println!("✅ Database connected successfully!");
 
     // Create table with all the mapped columns
     sqlx::query(
@@ -138,6 +144,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_routes = Router::new()
         .route("/leads", get(get_leads))
         .route("/leads/bulk", post(import_leads_bulk))
+        .route("/leads/purge", delete(delete_all_leads))
+        .route("/leads/:id", delete(delete_lead))
         .with_state(pool);
 
     let app = Router::new()
@@ -155,12 +163,61 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn get_leads(State(pool): State<PgPool>) -> impl IntoResponse {
-    let leads = sqlx::query_as::<_, Lead>("SELECT * FROM leads ORDER BY id DESC LIMIT 100") // Limiting for UI performance
-        .fetch_all(&pool)
+async fn get_leads(
+    State(pool): State<PgPool>,
+    axum::extract::Query(pagination): axum::extract::Query<PaginationQuery>,
+) -> impl IntoResponse {
+    let per_page = pagination.per_page.unwrap_or(50);
+    let page = pagination.page.unwrap_or(1);
+    let offset = (page - 1) * per_page;
+
+    let leads = sqlx::query_as::<_, Lead>(
+        "SELECT * FROM leads ORDER BY id DESC LIMIT $1 OFFSET $2"
+    )
+    .bind(per_page)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default();
+
+    // Get total count for pagination info
+    let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM leads")
+        .fetch_one(&pool)
         .await
-        .unwrap_or_default();
-    Json(leads)
+        .unwrap_or((0,));
+
+    Json(serde_json::json!({
+        "data": leads,
+        "total": total.0,
+        "page": page,
+        "per_page": per_page
+    }))
+}
+
+async fn delete_lead(
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<i32>,
+) -> impl IntoResponse {
+    let res = sqlx::query("DELETE FROM leads WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await;
+
+    match res {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
+
+async fn delete_all_leads(State(pool): State<PgPool>) -> impl IntoResponse {
+    let res = sqlx::query("DELETE FROM leads")
+        .execute(&pool)
+        .await;
+
+    match res {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
 }
 
 async fn import_leads_bulk(

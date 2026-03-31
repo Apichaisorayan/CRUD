@@ -135,9 +135,20 @@ const DEFAULT_MAPPING = {
     year: ["Year"]
 };
 
-document.addEventListener('DOMContentLoaded', fetchLeads);
+let currentPage = 1;
+const perPage = 50;
+let totalEntries = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchLeads();
+    setupPagination();
+});
+
 uploadForm.addEventListener('submit', handleUpload);
-btnRefresh.addEventListener('click', fetchLeads);
+btnRefresh.addEventListener('click', () => {
+    currentPage = 1;
+    fetchLeads();
+});
 
 async function handleUpload(e) {
     e.preventDefault();
@@ -187,16 +198,12 @@ function mapRow(row, mappingConfig) {
     for (const [standardKey, possibleNames] of Object.entries(mappingConfig)) {
         let foundValue = null;
 
-        // Exact match check first
         for (const name of possibleNames) {
-            // we check if that column name exists in our row data exactly, or ignoring case/spaces
-            // A simple approach: exactly matches header string
             if (row[name] !== undefined && row[name] !== "") {
                 foundValue = row[name];
                 break;
             }
 
-            // Try trimmed case-insensitive
             const matchingKey = rowKeys.find(k => k.trim().toLowerCase() === name.trim().toLowerCase());
             if (matchingKey && row[matchingKey] !== "") {
                 foundValue = row[matchingKey];
@@ -207,7 +214,6 @@ function mapRow(row, mappingConfig) {
         mappedRow[standardKey] = foundValue ? String(foundValue).trim() : null;
     }
 
-    // Assigning missing years dynamically if not mapped
     if (!mappedRow.year) {
         if (mappingYearSelect.value !== 'auto') {
             mappedRow.year = mappingYearSelect.value;
@@ -221,9 +227,6 @@ async function processData(csvData, selectedYear) {
     const mappingConfig = getMapping(selectedYear);
     const convertedData = csvData.map(row => mapRow(row, mappingConfig));
 
-    console.log(`Ready to send ${convertedData.length} records...`, convertedData[0]);
-
-    // Send to backend in one batch
     try {
         const response = await fetch(`${API_URL}/leads/bulk`, {
             method: 'POST',
@@ -235,13 +238,11 @@ async function processData(csvData, selectedYear) {
             const data = await response.json();
             showNotification(`Import successful: ${data.imported_rows} rows added`, 'success');
 
-            // Show summary
             summarySection.classList.remove('hidden');
             importedCount.innerText = data.imported_rows;
 
             csvFileInput.value = '';
-
-            // Refresh table
+            currentPage = 1;
             fetchLeads();
         } else {
             const text = await response.text();
@@ -256,31 +257,102 @@ async function processData(csvData, selectedYear) {
     }
 }
 
-async function fetchLeads() {
+document.getElementById('btn-purge').addEventListener('click', handlePurge);
+
+async function handlePurge() {
+    if (!confirm('Are you sure you want to delete ALL records? This cannot be undone.')) return;
+    
     try {
-        const response = await fetch(`${API_URL}/leads`);
-        const data = await response.json();
-        renderTable(data);
+        const response = await fetch(`${API_URL}/leads/purge`, { method: 'DELETE' });
+        if (response.ok) {
+            showNotification('Database purged successfully', 'success');
+            currentPage = 1;
+            fetchLeads();
+        }
     } catch (err) {
         console.error(err);
-        // Only show error if it's not the initial load to prevent flashing warnings
+        showNotification('Failed to purge database', 'error');
     }
+}
+
+async function deleteLead(id) {
+    if (!confirm(`Delete record #${id}?`)) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            showNotification(`Record #${id} deleted`, 'success');
+            fetchLeads();
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function setupPagination() {
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            fetchLeads();
+        }
+    });
+    
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentPage * perPage < totalEntries) {
+            currentPage++;
+            fetchLeads();
+        }
+    });
+}
+
+async function fetchLeads() {
+    try {
+        const response = await fetch(`${API_URL}/leads?page=${currentPage}&per_page=${perPage}`);
+        const result = await response.json();
+        
+        totalEntries = result.total;
+        renderTable(result.data);
+        updatePaginationUI(result);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function updatePaginationUI(result) {
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalEntries);
+    
+    document.getElementById('page-start').innerText = totalEntries === 0 ? 0 : start;
+    document.getElementById('page-end').innerText = end;
+    document.getElementById('total-entries').innerText = totalEntries;
+    
+    document.getElementById('btn-prev').disabled = currentPage <= 1;
+    document.getElementById('btn-next').disabled = end >= totalEntries;
+    
+    // Render page numbers (simplified)
+    const pageNumbers = document.getElementById('page-numbers');
+    pageNumbers.innerHTML = `<span class="current-page-label">Page ${currentPage}</span>`;
 }
 
 function renderTable(leads) {
     leadsBody.innerHTML = '';
-    taskCount.innerText = leads.length;
+    taskCount.innerText = totalEntries;
 
     if (leads.length === 0) {
-        leadsBody.innerHTML = `<tr><td colspan="28" style="text-align: center; color: var(--text-dim); padding: 2rem;">No leads found in database.</td></tr>`;
+        leadsBody.innerHTML = `<tr><td colspan="29" style="text-align: center; color: var(--text-muted); padding: 3rem;">No records found.</td></tr>`;
         return;
     }
 
     leads.forEach(lead => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="text-align: center;">
+                <button class="btn-delete" onclick="deleteLead(${lead.id})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </td>
             <td>#${lead.id}</td>
-            <td>${lead.customer_id || '-'}</td>
+            <td class="text-mono">${lead.customer_id || '-'}</td>
             <td><strong>${lead.display_name || '-'}</strong></td>
             <td>${lead.phone || '-'}</td>
             <td>${lead.email || '-'}</td>
