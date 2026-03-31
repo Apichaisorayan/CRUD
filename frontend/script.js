@@ -310,9 +310,19 @@ async function fetchLeads() {
         const response = await fetch(`${API_URL}/leads?page=${currentPage}&per_page=${perPage}`);
         const result = await response.json();
         
-        totalEntries = result.total;
-        renderTable(result.data);
-        updatePaginationUI(result);
+        // Handle both new {data, total} and old [...] response for better robustness
+        if (result && result.data && Array.isArray(result.data)) {
+            totalEntries = result.total || 0;
+            renderTable(result.data);
+            updatePaginationUI(result);
+        } else if (Array.isArray(result)) {
+            totalEntries = result.length;
+            renderTable(result);
+            console.warn("Backend is still using legacy array response.");
+        } else {
+            console.error("Unknown API response format:", result);
+            showNotification("Invalid data format received from server.", "error");
+        }
     } catch (err) {
         console.error(err);
     }

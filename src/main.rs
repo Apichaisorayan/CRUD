@@ -2,7 +2,7 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post, Router},
+    routing::{get, post, delete, Router},
     Json,
 };
 use serde::{Deserialize, Serialize};
