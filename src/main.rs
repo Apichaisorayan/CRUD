@@ -145,7 +145,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/leads", get(get_leads))
         .route("/leads/bulk", post(import_leads_bulk))
         .route("/leads/purge", delete(delete_all_leads))
-        .route("/leads/:id", delete(delete_lead))
+        .route("/leads/{id}", delete(delete_lead))
         .with_state(pool);
 
     let app = Router::new()
